@@ -87,7 +87,7 @@ var Visualizer = (function($, window, undefined) {
       for (var fi = 0, nfi = 0; fi < this.unsegmentedOffsets.length; fi++) {
         var begin = this.unsegmentedOffsets[fi][0];
         var end = this.unsegmentedOffsets[fi][1];
-      
+
         for (var ti = begin; ti < end; ti++) {
           var c = text.charAt(ti);
           if (c == '\n' || c == '\r') {
@@ -101,7 +101,7 @@ var Visualizer = (function($, window, undefined) {
             begin = ti;
           }
         }
-      
+
         if (begin !== null) {
           this.offsets.push([begin, end]);
           this.segmentedOffsetsMap[nfi++] = fi;
@@ -523,11 +523,78 @@ var Visualizer = (function($, window, undefined) {
 
         return 0;
       };
-
-
-      var setData = function(_sourceData) {
+///////////////////////////////////////////////////////////////////////////////
+// ARIZONA's modification
+      var setData = function(_sourceData, filteredEvents) {
         if (!args) args = {};
         sourceData = _sourceData;
+
+        // We filter the triggers, events and contextOf relations for those
+        // events listed in filteredEvents
+
+        // To make it work always
+        if(filteredEvents === undefined)
+          filteredEvents = []
+
+        var triggers_ids = []
+
+        var triggers = sourceData.triggers.filter(function(element){
+          var type = element[1]
+          var key = element[0]
+
+          if($.inArray(type, filteredEvents) >= 0){
+            triggers_ids.push(key)
+            return false
+          }
+          else{
+            return true
+          }
+        })
+
+        // Remove the events corresponding to the triggers
+        var event_ids = []
+
+        var events = sourceData.events.filter(function(element){
+          var trigger = element[1]
+          var key = element[0]
+
+          if($.inArray(trigger, triggers_ids) >= 0){
+            event_ids.push(key)
+            return false
+          }
+          else{
+            return true
+          }
+        })
+
+        // Remove the context-of relations that have the event as a participant
+        var relations = sourceData.relations.filter(function(element){
+          var type = element[1]
+
+          if(type == 'ContextOf'){
+            participants = [element[2][0][1], element[2][1][1]]
+
+            if($.inArray(participants[0], triggers_ids)  >= 0 ||
+              $.inArray(participants[0], event_ids)  >= 0 ||
+              $.inArray(participants[1], triggers_ids)  >= 0 ||
+              $.inArray(participants[1], event_ids) >= 0){
+                return false
+              }
+            else{
+              return true
+            }
+          }
+          else{
+            return true
+          }
+        })
+
+        // Set the filtered values
+        sourceData.triggers = triggers
+        sourceData.events = events
+        sourceData.relations = relations
+
+///////////////////////////////////////////////////////////////////////////////
         dispatcher.post('newSourceData', [sourceData]);
         data = new DocumentData(sourceData.text);
 
@@ -3207,7 +3274,7 @@ Util.profileStart('before render');
             aType.bool = aType.values[0].name;
           }
           // We need attribute values to be stored as an array, in the correct order,
-          // but for efficiency of access later we also create a map of each value 
+          // but for efficiency of access later we also create a map of each value
           // name to the corresponding value dictionary.
           aType.values.byName = {}
           $.each(aType.values, function(valueNo, val) {
