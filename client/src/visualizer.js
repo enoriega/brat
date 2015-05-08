@@ -360,6 +360,7 @@ var Visualizer = (function($, window, undefined) {
       var $svg;
       var data = null;
       var sourceData = null;
+      var filteredTypes = []; // Added by Enrique
       var requestedData = null;
       var coll, doc, args;
       var relationTypesHash;
@@ -525,9 +526,35 @@ var Visualizer = (function($, window, undefined) {
       };
 ///////////////////////////////////////////////////////////////////////////////
 // ARIZONA's modification
+      getEventTypes = function(){
+          // Gets the names of the events from the triggers section of
+          // the source data
+          var types = sourceData.triggers.map(function(element){
+            return element[1]
+          })
+          function eliminateDuplicates(arr) {
+            var i,
+                len=arr.length,
+                out=[],
+                obj={};
+
+            for (i=0;i<len;i++) {
+              obj[arr[i]]=0;
+            }
+            for (i in obj) {
+              out.push(i);
+            }
+            return out;
+          }
+
+          types = eliminateDuplicates(types)
+
+          return types
+      }
+
       var setData = function(_sourceData, filteredEvents) {
         if (!args) args = {};
-        sourceData = _sourceData;
+        sourceData = $.extend(true, {}, _sourceData); // Deep copy
 
         // We filter the triggers, events and contextOf relations for those
         // events listed in filteredEvents
@@ -1187,10 +1214,15 @@ var Visualizer = (function($, window, undefined) {
         }); // markedText
 
         dispatcher.post('dataReady', [data]);
+
+        // ENRIQUE
+        sourceData = _sourceData
+        dispatcher.post('eventTypes', [getEventTypes()])
       };
 
-      var resetData = function() {
-        setData(sourceData);
+      var resetData = function(filteredTypes) {
+        //TODO: retrieve the filitered types
+        setData(sourceData, filteredTypes); // Changed by Enrique
         renderData();
       }
 
