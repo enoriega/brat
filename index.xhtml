@@ -48,15 +48,7 @@
           // Util.profileEnable();
           dispatcher.post('init');
 
-          dispatcher.on('eventTypes', function(data){
-            var container = $('#hiden_event_types')
-            $.each(data, function(ix, el){
-              //var dom = $('<input></input>', {id:el, value:el, type:'checkbox'})
-              container.append($('<input type="checkbox" value="'+el+'">hola</input>'))
-            })
-          })
       });
-
 
 
     </script>
@@ -254,10 +246,14 @@
       <fieldset id="options_hide_types">
         <legend>Hidden event types</legend>
         <div class="optionRow">
-            <span id="hiden_event_types">
-                <!-- <input id="hide-phospho" value="Phosphorylation" type="checkbox"></input><label for="hide-phospho">Phosphorylation</label><br />
-                <input id="hide-ubi" value="Ubiquitination" type="checkbox"></input><label for="hide-ubi">Ubiquitination</label><br />
-                <input id="hide-upr" value="Upregulation" type="checkbox"></input><label for="hide-upr">Up-regulation</label><br /> -->
+            <span id="hidden_event_types">
+              <input id="hide-phospho" value="Phosphorylation" type="checkbox"></input><label for="hide-phospho">Phosphorylation</label><br />
+              <input id="hide-binding" value="Binding" type="checkbox"></input><label for="hide-binding">Binding</label><br />
+              <input id="hide-exchange" value="Binding" type="checkbox"></input><label for="hide-exchange">Exchange</label><br />
+              <input id="hide-ubi" value="Ubiquitination" type="checkbox"></input><label for="hide-ubi">Ubiquitination</label><br />
+              <input id="hide-upr" value="Positive_regulation" type="checkbox"></input><label for="hide-upr">Positive regulation</label><br />
+              <input id="hide-transcription" value="Transcription" type="checkbox"></input><label for="hide-transcription">Transcription</label><br />
+              <input id="hide-transport" value="Transport" type="checkbox"></input><label for="hide-transport">Transport</label><br />
             </span>
         </div>
       </fieldset>
