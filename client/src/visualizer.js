@@ -325,6 +325,7 @@ var Visualizer = (function($, window, undefined) {
       var $svg;
       var data = null;
       var sourceData = null;
+      var filteredTypes = []; // Added by Enrique
       var requestedData = null;
       var coll, doc, args;
       var relationTypesHash;
@@ -478,11 +479,104 @@ var Visualizer = (function($, window, undefined) {
 
         return 0;
       };
+///////////////////////////////////////////////////////////////////////////////
+// ARIZONA's modification
+      getEventTypes = function(){
+          // Gets the names of the events from the triggers section of
+          // the source data
+          var types = sourceData.triggers.map(function(element){
+            return element[1]
+          })
+          function eliminateDuplicates(arr) {
+            var i,
+                len=arr.length,
+                out=[],
+                obj={};
 
+            for (i=0;i<len;i++) {
+              obj[arr[i]]=0;
+            }
+            for (i in obj) {
+              out.push(i);
+            }
+            return out;
+          }
 
-      var setData = function(_sourceData) {
+          types = eliminateDuplicates(types)
+
+          return types
+      }
+
+      var setData = function(_sourceData, filteredEvents) {
         if (!args) args = {};
-        sourceData = _sourceData;
+        sourceData = $.extend(true, {}, _sourceData); // Deep copy
+
+        // We filter the triggers, events and contextOf relations for those
+        // events listed in filteredEvents
+
+        // To make it work always
+        if(filteredEvents === undefined)
+          filteredEvents = []
+
+        var triggers_ids = []
+
+        var triggers = sourceData.triggers.filter(function(element){
+          var type = element[1]
+          var key = element[0]
+
+          if($.inArray(type, filteredEvents) >= 0){
+            triggers_ids.push(key)
+            return false
+          }
+          else{
+            return true
+          }
+        })
+
+        // Remove the events corresponding to the triggers
+        var event_ids = []
+
+        var events = sourceData.events.filter(function(element){
+          var trigger = element[1]
+          var key = element[0]
+
+          if($.inArray(trigger, triggers_ids) >= 0){
+            event_ids.push(key)
+            return false
+          }
+          else{
+            return true
+          }
+        })
+
+        // Remove the context-of relations that have the event as a participant
+        var relations = sourceData.relations.filter(function(element){
+          var type = element[1]
+
+          if(type == 'ContextOf'){
+            participants = [element[2][0][1], element[2][1][1]]
+
+            if($.inArray(participants[0], triggers_ids)  >= 0 ||
+              $.inArray(participants[0], event_ids)  >= 0 ||
+              $.inArray(participants[1], triggers_ids)  >= 0 ||
+              $.inArray(participants[1], event_ids) >= 0){
+                return false
+              }
+            else{
+              return true
+            }
+          }
+          else{
+            return true
+          }
+        })
+
+        // Set the filtered values
+        sourceData.triggers = triggers
+        sourceData.events = events
+        sourceData.relations = relations
+
+///////////////////////////////////////////////////////////////////////////////
         dispatcher.post('newSourceData', [sourceData]);
         data = new DocumentData(sourceData.text);
 
@@ -1068,10 +1162,15 @@ var Visualizer = (function($, window, undefined) {
         }); // markedText
 
         dispatcher.post('dataReady', [data]);
+
+        // ENRIQUE
+        sourceData = _sourceData
+        dispatcher.post('eventTypes', [getEventTypes()])
       };
 
-      var resetData = function() {
-        setData(sourceData);
+      var resetData = function(filteredTypes) {
+        //TODO: retrieve the filitered types
+        setData(sourceData, filteredTypes); // Changed by Enrique
         renderData();
       }
 

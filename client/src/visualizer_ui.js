@@ -1764,6 +1764,19 @@ var VisualizerUI = (function($, window, undefined) {
           }, 500);
         });
 
+      // Added by enrique
+      $('#options_hide_types input').click(function(evt){
+          // Get the list of checked event type boxes
+          var filter = []
+          $('#options_hide_types input').each(function(){
+            if(this.checked)
+              filter.push($(this).val())
+          })
+
+          //dispatcher.post('collectionChanged')
+          dispatcher.post('resetData', [filter])
+      })
+
       $('#label_abbreviations input').click(function(evt) {
         var val = this.value;
         val = val === 'on';
